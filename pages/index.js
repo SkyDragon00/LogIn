@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import axios from 'axios';
+import { useRouter } from 'next/router';
 
 export default function Home() {
   const [personajes, setPersonajes] = useState([]);
@@ -7,7 +9,19 @@ export default function Home() {
   const [clase, setClase] = useState(''); 
   const [dificultad, setDificultad] = useState(''); 
   const [idEditar, setIdEditar] = useState(null);
+  const router = useRouter();
 
+  useEffect(() => {
+    // Check if the user is authenticated
+    axios.get('/api/personajes')
+      .then(response => {
+        setPersonajes(response.data);
+      })
+      .catch(() => {
+        router.push('/login'); // Redirect to login if not authenticated
+      });
+  }, []);
+  
   // Cargar personajes desde localStorage al iniciar la página
   useEffect(() => {
     const personajesGuardados = JSON.parse(localStorage.getItem('personajes')) || [];

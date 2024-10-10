@@ -1,6 +1,8 @@
 const express = require('express');
 const next = require('next');
 const bodyParser = require('body-parser');
+const session = require('express-session');
+const bcrypt = require('bcryptjs');
 
 const dev = process.env.NODE_ENV !== 'production';
 const app = next({ dev });
@@ -10,45 +12,81 @@ app.prepare().then(() => {
   const server = express();
   server.use(bodyParser.json());
 
-  // Simulación de base de datos en memoria
-  let personajes = [];
+  // Session middleware
+  server.use(session({
+    secret: 'your-secret-key',
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: false }
+  }));
 
-  // Obtener todos los personajes
-  server.get('/api/personajes', (req, res) => {
+ // Simulated database
+const users = [
+    { id: 1, username: 'Domecita', password: bcrypt.hashSync('123', 10) }
+  ];
+  let personajes = [];  
+
+  // Login endpoint
+  server.post('/api/login', (req, res) => {
+    const { username, password } = req.body;
+    const user = users.find(u => u.username === username);
+    if (user && bcrypt.compareSync(password, user.password)) {
+      req.session.user = { id: user.id, username: user.username };
+      res.json({ message: 'Login successful' });
+    } else {
+      res.status(401).json({ message: 'Invalid username or password' });
+    }
+  });
+
+  // Middleware to check authentication
+  const isAuthenticated = (req, res, next) => {
+    if (req.session.user) {
+      next();
+    } else {
+      res.status(401).json({ message: 'Unauthorized' });
+    }
+  };
+
+  // Login endpoint
+server.post('/api/login', (req, res) => {
+    const { username, password } = req.body;
+    console.log('Login attempt:', username, password); // Log the received credentials
+    
+    const user = users.find(u => u.username === username);
+    if (user && bcrypt.compareSync(password, user.password)) {
+      req.session.user = { id: user.id, username: user.username };
+      res.json({ message: 'Login successful' });
+    } else {
+      res.status(401).json({ message: 'Invalid username or password' });
+    }
+  });
+  
+
+  // Protect CRUD routes
+  server.get('/api/personajes', isAuthenticated, (req, res) => {
     res.json(personajes);
   });
 
-  // Agregar un personaje
-  server.post('/api/personajes', (req, res) => {
+  server.post('/api/personajes', isAuthenticated, (req, res) => {
     const nuevoPersonaje = req.body;
     personajes.push(nuevoPersonaje);
     res.json({ message: 'Personaje agregado', personaje: nuevoPersonaje });
   });
 
-// Editar un personaje
-server.put('/api/personajes/:id', (req, res) => {
+  server.put('/api/personajes/:id', isAuthenticated, (req, res) => {
     const { id } = req.params;
-    const { nombre, habilidad, clase, dificultad } = req.body; // Extraer todos los campos del cuerpo de la solicitud
-    personajes = personajes.map((p) =>
-      p.id === Number(id)
-        ? { ...p, nombre, habilidad, clase, dificultad } // Actualizar todos los campos
-        : p
-    );
-    res.json({
-      message: 'Personaje actualizado',
-      personaje: { id: Number(id), nombre, habilidad, clase, dificultad }, // Enviar el personaje actualizado
-    });
+    const { nombre, habilidad, clase, dificultad } = req.body;
+    personajes = personajes.map(p => p.id === Number(id) ? { ...p, nombre, habilidad, clase, dificultad } : p);
+    res.json({ message: 'Personaje actualizado', personaje: { id: Number(id), nombre, habilidad, clase, dificultad } });
   });
-  
 
-  // Eliminar un personaje
-  server.delete('/api/personajes/:id', (req, res) => {
+  server.delete('/api/personajes/:id', isAuthenticated, (req, res) => {
     const { id } = req.params;
-    personajes = personajes.filter((p) => p.id !== Number(id));
+    personajes = personajes.filter(p => p.id !== Number(id));
     res.json({ message: 'Personaje eliminado' });
   });
 
-  // Manejar todas las otras rutas con Next.js
+  // Handle all other routes with Next.js
   server.all('*', (req, res) => {
     return handle(req, res);
   });
