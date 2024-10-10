@@ -85,16 +85,28 @@ export default function Home() {
     setIdEditar(null);
   };
 
+  // Handle logout
+  const handleLogout = async () => {
+    try {
+      await axios.post('/api/logout');
+      localStorage.removeItem('personajes'); // Clear local storage if needed
+      router.push('/login'); // Redirect to the login page
+    } catch (error) {
+      console.error('Logout failed:', error);
+      alert('Failed to log out. Please try again.');
+    }
+  };
+
   return (
     <div>
       <h1>Personajes del Videojuego</h1>
+      <button onClick={handleLogout}>Logout</button> {/* Logout button */}
       <ul>
         {personajes.map((personaje) => (
           <li key={personaje.id}>
             {personaje.nombre} - {personaje.habilidad || '-'} - {personaje.clase || '-'} - Dificultad: {personaje.dificultad || '-'}
             <button onClick={() => seleccionarParaEditar(personaje)}>Editar</button>{' '}
             <button onClick={() => handleEliminarPersonaje(personaje.id)}>Eliminar</button>
-
           </li>
         ))}
       </ul>
@@ -124,11 +136,9 @@ export default function Home() {
           value={dificultad}
           onChange={(e) => setDificultad(e.target.value)}
         />
-        
-        <button 
-        type="submit">
-            {idEditar ? 'Actualizar' : 'Agregar'}
-            </button>
+        <button type="submit">
+          {idEditar ? 'Actualizar' : 'Agregar'}
+        </button>
       </form>
     </div>
   );

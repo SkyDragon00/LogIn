@@ -47,19 +47,16 @@ const users = [
     }
   };
 
-  // Login endpoint
-server.post('/api/login', (req, res) => {
-    const { username, password } = req.body;
-    console.log('Login attempt:', username, password); // Log the received credentials
-    
-    const user = users.find(u => u.username === username);
-    if (user && bcrypt.compareSync(password, user.password)) {
-      req.session.user = { id: user.id, username: user.username };
-      res.json({ message: 'Login successful' });
-    } else {
-      res.status(401).json({ message: 'Invalid username or password' });
-    }
+// Logout endpoint
+server.post('/api/logout', (req, res) => {
+    req.session.destroy((err) => {
+      if (err) {
+        return res.status(500).json({ message: 'Logout failed' });
+      }
+      res.json({ message: 'Logout successful' });
+    });
   });
+  
   
 
   // Protect CRUD routes
