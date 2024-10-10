@@ -1,12 +1,21 @@
 {
-  "name": "login",
+  "name": "nextpr",
   "version": "1.0.0",
   "main": "app.js",
   "scripts": {
-    "start": "node app.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
   },
   "author": "Dome",
   "license": "ISC",
-  "description": ""
+  "description": "",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "body-parser": "^1.20.3",
+    "express": "^4.21.1",
+    "express-session": "^1.18.1",
+    "http": "^0.0.1-security",
+    "next": "^14.2.15"
+  }
 }
